@@ -1,6 +1,0 @@
-using OrderManagement.Client.Services;
-
-namespace OrderManagement.Client.Services;
-
-// ToastService is already defined in ToastService.cs
-// This file intentionally left empty — see ToastService.cs

@@ -1,6 +1,8 @@
 @page "/orders/{Id:int}"
 @inject IOrderService OrderSvc
 @inject NavigationManager Nav
+@inject SettingsService SettingsSvc
+@inject IJSRuntime JS
 
 <PageTitle>অর্ডার বিস্তারিত — অর্ডার ব্যবস্থাপনা</PageTitle>
 
@@ -36,10 +38,27 @@ else
                 </span>
             </span>
         </div>
+        @if (!string.IsNullOrWhiteSpace(_order.PhoneNumber))
+        {
+            <div class="detail-row">
+                <span class="detail-label">📱 ফোন</span>
+                <span class="detail-value">@_order.PhoneNumber</span>
+            </div>
+        }
     </div>
 
     <div class="detail-actions">
         <a href="/orders/edit/@_order.Id" class="btn btn-primary">✏️ সম্পাদনা করুন</a>
+
+        @if (!string.IsNullOrWhiteSpace(_order.PhoneNumber))
+        {
+            <button class="btn btn-whatsapp" @onclick="SendWhatsApp" disabled="@_sendingWA">
+                @if (_sendingWA) { <span class="spinner-sm"></span> }
+                else { <span>💬</span> }
+                WhatsApp পাঠান
+            </button>
+        }
+
         <a href="/orders" class="btn btn-secondary">তালিকায় ফিরুন</a>
     </div>
 }
@@ -49,11 +68,22 @@ else
 
     private Order? _order;
     private bool _loading = true;
+    private bool _sendingWA = false;
 
     protected override async Task OnInitializedAsync()
     {
         _order = await OrderSvc.GetOrderByIdAsync(Id);
         _loading = false;
+    }
+
+    private async Task SendWhatsApp()
+    {
+        if (_order is null) return;
+        _sendingWA = true;
+        var url = await SettingsSvc.BuildWhatsAppUrlAsync(_order.PhoneNumber, _order.OrderNo);
+        if (url is not null)
+            await JS.InvokeVoidAsync("open", url, "_blank");
+        _sendingWA = false;
     }
 
     private static string GetStatusLabel(OrderStatus s) => s switch

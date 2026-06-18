@@ -1,8 +1,10 @@
 @inherits LayoutComponentBase
+@inject NavigationManager Nav
+@implements IDisposable
 
 <div class="app-layout">
     <!-- Sidebar overlay for mobile -->
-    <div class="sidebar-overlay @(sidebarOpen ? "show" : "")" @onclick="ToggleSidebar"></div>
+    <div class="sidebar-overlay @(sidebarOpen ? "show" : "")" @onclick="CloseSidebar"></div>
 
     <!-- Sidebar Navigation -->
     <nav class="sidebar @(sidebarOpen ? "open" : "")">
@@ -11,7 +13,7 @@
                 <span class="logo-icon">📦</span>
                 <span class="app-title">অর্ডার ব্যবস্থাপনা</span>
             </div>
-            <button class="sidebar-close" @onclick="ToggleSidebar">✕</button>
+            <button class="sidebar-close" @onclick="CloseSidebar">✕</button>
         </div>
         <NavMenu />
     </nav>
@@ -40,5 +42,25 @@
 @code {
     private bool sidebarOpen = false;
 
+    protected override void OnInitialized()
+    {
+        Nav.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        if (sidebarOpen)
+        {
+            sidebarOpen = false;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
     private void ToggleSidebar() => sidebarOpen = !sidebarOpen;
+    private void CloseSidebar()  => sidebarOpen = false;
+
+    public void Dispose()
+    {
+        Nav.LocationChanged -= OnLocationChanged;
+    }
 }

@@ -1,0 +1,81 @@
+@page "/settings"
+@inject SettingsService SettingsSvc
+@inject ToastService Toast
+
+<PageTitle>সেটিংস — অর্ডার ব্যবস্থাপনা</PageTitle>
+
+<div class="page-header">
+    <h1 class="page-title">⚙️ সেটিংস</h1>
+</div>
+
+@if (_loading)
+{
+    <LoadingSpinner />
+}
+else
+{
+    <div class="form-card settings-card">
+        <div class="settings-section-title">💬 WhatsApp কনফিগারেশন</div>
+
+        <div class="form-group">
+            <label class="form-label">
+                অ্যাডমিন WhatsApp নম্বর
+            </label>
+            <input class="form-input" type="tel" @bind="_settings.AdminPhone"
+                   placeholder="যেমন: 8801XXXXXXXXX" />
+            <span class="form-hint-text">
+                আন্তর্জাতিক ফরম্যাটে লিখুন (কান্ট্রি কোডসহ)।
+            </span>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                মেসেজ টেমপ্লেট
+            </label>
+            <textarea class="form-input form-textarea" rows="4"
+                      @bind="_settings.MessageTemplate"
+                      placeholder="আপনার অর্ডার {OrderNo} সম্পন্ন হয়েছে। ধন্যবাদ!"></textarea>
+        </div>
+
+        <!-- Live Preview -->
+        <div class="preview-box">
+            <div class="preview-label">📋 প্রিভিউ</div>
+            <div class="preview-text">
+                @(_settings.MessageTemplate?.Replace("{OrderNo}", "ORD-2024-001") ?? "—")
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button class="btn btn-primary" @onclick="Save" disabled="@_saving">
+                @if (_saving) { <span class="spinner-sm"></span> }
+                💾 সংরক্ষণ করুন
+            </button>
+            <button class="btn btn-secondary" @onclick="Reset">↺ ডিফল্টে ফিরুন</button>
+        </div>
+    </div>
+}
+
+@code {
+    private WhatsAppSettings _settings = new();
+    private bool _loading = true;
+    private bool _saving  = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _settings = await SettingsSvc.GetSettingsAsync();
+        _loading  = false;
+    }
+
+    private async Task Save()
+    {
+        _saving = true;
+        await SettingsSvc.SaveSettingsAsync(_settings);
+        Toast.ShowSuccess("সেটিংস সংরক্ষিত হয়েছে। ✅");
+        _saving = false;
+    }
+
+    private void Reset()
+    {
+        _settings = new WhatsAppSettings();
+    }
+}

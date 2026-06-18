@@ -9,7 +9,7 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-// HTTP client
+
 builder.Services.AddScoped(sp =>
     new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
@@ -23,6 +23,9 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 
 // Toast notification service (singleton to survive page navigation)
 builder.Services.AddSingleton<ToastService>();
+
+// WhatsApp settings service (singleton — persists across pages)
+builder.Services.AddSingleton<SettingsService>();
 
 var host = builder.Build();
 

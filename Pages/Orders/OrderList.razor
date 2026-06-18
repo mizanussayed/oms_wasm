@@ -18,10 +18,10 @@
     </div>
     <div class="filter-group">
         <select class="form-select" @bind="_filterStatus" @bind:after="ApplyFilters">
-            <option value="">সব স্ট্যাটাস</option>
             <option value="Pending">অপেক্ষমাণ</option>
             <option value="Done">সম্পন্ন</option>
             <option value="Delivered">ডেলিভার হয়েছে</option>
+            <option value="">সব স্ট্যাটাস</option>
         </select>
     </div>
     <div class="filter-group">
@@ -122,7 +122,7 @@ else
     private List<Order> _pagedOrders = new();
 
     private string _searchTerm = "";
-    private string _filterStatus = "";
+    private string _filterStatus = "Pending";
     private bool _sortByOrderNo = false;
     private int _currentPage = 1;
     private int TotalPages => (int)Math.Ceiling(_filteredOrders.Count / (double)PageSize);
