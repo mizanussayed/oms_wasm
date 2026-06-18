@@ -1,0 +1,19 @@
+@inject NavigationManager Nav
+
+@{
+    var href = Nav.ToAbsoluteUri(Href).PathAndQuery;
+    var current = Nav.ToAbsoluteUri(Nav.Uri).PathAndQuery;
+    bool active = ExactMatch ? current == href : current.StartsWith(href, StringComparison.OrdinalIgnoreCase);
+}
+
+<a href="@Href" class="nav-link @(active ? "active" : "")">
+    <span class="nav-icon">@Icon</span>
+    <span class="nav-label">@Label</span>
+</a>
+
+@code {
+    [Parameter, EditorRequired] public string Href { get; set; } = "/";
+    [Parameter, EditorRequired] public string Icon { get; set; } = "";
+    [Parameter, EditorRequired] public string Label { get; set; } = "";
+    [Parameter] public bool ExactMatch { get; set; } = false;
+}

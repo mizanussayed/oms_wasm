@@ -1,0 +1,44 @@
+@inherits LayoutComponentBase
+
+<div class="app-layout">
+    <!-- Sidebar overlay for mobile -->
+    <div class="sidebar-overlay @(sidebarOpen ? "show" : "")" @onclick="ToggleSidebar"></div>
+
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar @(sidebarOpen ? "open" : "")">
+        <div class="sidebar-header">
+            <div class="app-logo">
+                <span class="logo-icon">📦</span>
+                <span class="app-title">অর্ডার ব্যবস্থাপনা</span>
+            </div>
+            <button class="sidebar-close" @onclick="ToggleSidebar">✕</button>
+        </div>
+        <NavMenu />
+    </nav>
+
+    <!-- Main content area -->
+    <div class="main-wrapper">
+        <!-- Top header bar -->
+        <header class="topbar">
+            <button class="hamburger" @onclick="ToggleSidebar" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+            <div class="topbar-title">অর্ডার ব্যবস্থাপনা</div>
+            <div class="topbar-spacer"></div>
+        </header>
+
+        <!-- Page content -->
+        <main class="page-content">
+            @Body
+        </main>
+    </div>
+</div>
+
+<!-- Global Toast Notifications -->
+<ToastNotification />
+
+@code {
+    private bool sidebarOpen = false;
+
+    private void ToggleSidebar() => sidebarOpen = !sidebarOpen;
+}

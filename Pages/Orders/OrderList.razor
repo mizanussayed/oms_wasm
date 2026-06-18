@@ -1,0 +1,228 @@
+@page "/orders"
+@inject IOrderService OrderSvc
+@inject ToastService Toast
+@inject NavigationManager Nav
+
+<PageTitle>অর্ডার তালিকা — অর্ডার ব্যবস্থাপনা</PageTitle>
+
+<div class="page-header">
+    <h1 class="page-title">অর্ডার তালিকা</h1>
+    <a href="/orders/add" class="btn btn-primary">➕ নতুন অর্ডার</a>
+</div>
+
+<!-- Search & Filter Bar -->
+<div class="filter-bar">
+    <div class="filter-group">
+        <input class="form-input" type="text" placeholder="অর্ডার নম্বর খুঁজুন..."
+               @bind="_searchTerm" @bind:event="oninput" @bind:after="ApplyFilters" />
+    </div>
+    <div class="filter-group">
+        <select class="form-select" @bind="_filterStatus" @bind:after="ApplyFilters">
+            <option value="">সব স্ট্যাটাস</option>
+            <option value="Pending">অপেক্ষমাণ</option>
+            <option value="Done">সম্পন্ন</option>
+            <option value="Delivered">ডেলিভার হয়েছে</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <label class="sort-label">
+            <input type="checkbox" @bind="_sortByOrderNo" @bind:after="ApplyFilters" />
+            অর্ডার নম্বর অনুযায়ী সাজান
+        </label>
+    </div>
+</div>
+
+@if (_loading)
+{
+    <LoadingSpinner />
+}
+else if (_error is not null)
+{
+    <div class="alert-error">⚠️ @_error</div>
+}
+else
+{
+    <!-- Results summary -->
+    <p class="results-info">মোট @_pagedOrders.Count টি অর্ডার পাওয়া গেছে</p>
+
+    @if (!_filteredOrders.Any())
+    {
+        <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <p>কোনো অর্ডার পাওয়া যায়নি।</p>
+        </div>
+    }
+    else
+    {
+        <!-- Orders Table -->
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>অর্ডার নম্বর</th>
+                        <th>স্ট্যাটাস</th>
+                        <th>অ্যাকশন</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var (order, index) in _pagedOrders.Select((o, i) => (o, i)))
+                    {
+                        <tr>
+                            <td>@((_currentPage - 1) * PageSize + index + 1)</td>
+                            <td class="order-no">@order.OrderNo</td>
+                            <td>
+                                <span class="badge @GetStatusClass(order.Status)">
+                                    @GetStatusLabel(order.Status)
+                                </span>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a href="/orders/@order.Id" class="btn-icon" title="বিস্তারিত">👁</a>
+                                    <a href="/orders/edit/@order.Id" class="btn-icon" title="সম্পাদনা">✏️</a>
+                                    <button class="btn-icon danger" title="মুছুন"
+                                            @onclick="() => ShowDeleteDialog(order.Id, order.OrderNo)">🗑</button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        @if (TotalPages > 1)
+        {
+            <div class="pagination">
+                <button class="page-btn" disabled="@(_currentPage == 1)" @onclick="PrevPage">‹ আগে</button>
+                @for (int p = 1; p <= TotalPages; p++)
+                {
+                    var pageNum = p;
+                    <button class="page-btn @(_currentPage == pageNum ? "active" : "")"
+                            @onclick="() => GoToPage(pageNum)">@pageNum</button>
+                }
+                <button class="page-btn" disabled="@(_currentPage == TotalPages)" @onclick="NextPage">পরে ›</button>
+            </div>
+        }
+    }
+}
+
+<!-- Delete Confirmation Dialog -->
+<DeleteConfirmDialog
+    Visible="_showDelete"
+    Message="@($"অর্ডার \"{_deleteOrderNo}\" মুছে ফেলতে চান?")"
+    OnConfirm="ConfirmDelete"
+    OnCancel="CancelDelete" />
+
+@code {
+    private const int PageSize = 10;
+
+    private List<Order> _allOrders = new();
+    private List<Order> _filteredOrders = new();
+    private List<Order> _pagedOrders = new();
+
+    private string _searchTerm = "";
+    private string _filterStatus = "";
+    private bool _sortByOrderNo = false;
+    private int _currentPage = 1;
+    private int TotalPages => (int)Math.Ceiling(_filteredOrders.Count / (double)PageSize);
+
+    private bool _loading = true;
+    private string? _error;
+
+    // Delete dialog state
+    private bool _showDelete = false;
+    private int _deleteId;
+    private string _deleteOrderNo = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrdersAsync();
+    }
+
+    private async Task LoadOrdersAsync()
+    {
+        try
+        {
+            _loading = true;
+            _allOrders = await OrderSvc.GetAllOrdersAsync();
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            _error = $"তথ্য লোড করতে সমস্যা হয়েছে: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ApplyFilters()
+    {
+        OrderStatus? status = _filterStatus switch
+        {
+            "Pending"   => OrderStatus.Pending,
+            "Done"      => OrderStatus.Done,
+            "Delivered" => OrderStatus.Delivered,
+            _           => null
+        };
+
+        _filteredOrders = _allOrders
+            .Where(o => string.IsNullOrEmpty(_searchTerm) ||
+                        o.OrderNo.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase))
+            .Where(o => status == null || o.Status == status)
+            .ToList();
+
+        if (_sortByOrderNo)
+            _filteredOrders = _filteredOrders.OrderBy(o => o.OrderNo).ToList();
+
+        _currentPage = 1;
+        UpdatePage();
+    }
+
+    private void UpdatePage()
+    {
+        _pagedOrders = _filteredOrders
+            .Skip((_currentPage - 1) * PageSize)
+            .Take(PageSize)
+            .ToList();
+    }
+
+    private void GoToPage(int page) { _currentPage = page; UpdatePage(); }
+    private void PrevPage() { if (_currentPage > 1) GoToPage(_currentPage - 1); }
+    private void NextPage() { if (_currentPage < TotalPages) GoToPage(_currentPage + 1); }
+
+    private void ShowDeleteDialog(int id, string orderNo)
+    {
+        _deleteId = id;
+        _deleteOrderNo = orderNo;
+        _showDelete = true;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        _showDelete = false;
+        var (success, msg) = await OrderSvc.DeleteOrderAsync(_deleteId);
+        if (success) { Toast.ShowSuccess(msg); await LoadOrdersAsync(); }
+        else Toast.ShowError(msg);
+    }
+
+    private void CancelDelete() => _showDelete = false;
+
+    private static string GetStatusLabel(OrderStatus s) => s switch
+    {
+        OrderStatus.Pending   => "অপেক্ষমাণ",
+        OrderStatus.Done      => "সম্পন্ন",
+        OrderStatus.Delivered => "ডেলিভার হয়েছে",
+        _                     => s.ToString()
+    };
+
+    private static string GetStatusClass(OrderStatus s) => s switch
+    {
+        OrderStatus.Pending   => "badge-pending",
+        OrderStatus.Done      => "badge-done",
+        OrderStatus.Delivered => "badge-delivered",
+        _                     => ""
+    };
+}

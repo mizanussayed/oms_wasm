@@ -1,0 +1,87 @@
+@page "/"
+@inject IOrderService OrderSvc
+
+<PageTitle>ড্যাশবোর্ড — অর্ডার ব্যবস্থাপনা</PageTitle>
+
+<div class="page-header">
+    <h1 class="page-title">ড্যাশবোর্ড</h1>
+    <p class="page-subtitle">অর্ডারের সামগ্রিক পরিসংখ্যান</p>
+</div>
+
+@if (_loading)
+{
+    <LoadingSpinner Message="পরিসংখ্যান লোড হচ্ছে..." />
+}
+else if (_error is not null)
+{
+    <div class="alert-error">⚠️ @_error</div>
+}
+else
+{
+    <div class="stats-grid">
+        <div class="stat-card stat-total">
+            <div class="stat-icon">📦</div>
+            <div class="stat-info">
+                <div class="stat-value">@_stats!.Total</div>
+                <div class="stat-label">মোট অর্ডার</div>
+            </div>
+        </div>
+        <div class="stat-card stat-pending">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-info">
+                <div class="stat-value">@_stats!.Pending</div>
+                <div class="stat-label">অপেক্ষমাণ</div>
+            </div>
+        </div>
+        <div class="stat-card stat-done">
+            <div class="stat-icon">✅</div>
+            <div class="stat-info">
+                <div class="stat-value">@_stats!.Done</div>
+                <div class="stat-label">সম্পন্ন</div>
+            </div>
+        </div>
+        <div class="stat-card stat-delivered">
+            <div class="stat-icon">🚚</div>
+            <div class="stat-info">
+                <div class="stat-value">@_stats!.Delivered</div>
+                <div class="stat-label">ডেলিভার হয়েছে</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="quick-actions">
+        <h2 class="section-title">দ্রুত অ্যাকশন</h2>
+        <div class="action-cards">
+            <a href="/orders" class="action-card">
+                <span class="action-icon">📋</span>
+                <span>অর্ডার তালিকা দেখুন</span>
+            </a>
+            <a href="/orders/add" class="action-card accent">
+                <span class="action-icon">➕</span>
+                <span>নতুন অর্ডার তৈরি করুন</span>
+            </a>
+        </div>
+    </div>
+}
+
+@code {
+    private DashboardStats? _stats;
+    private bool _loading = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _stats = await OrderSvc.GetDashboardStatsAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = $"তথ্য লোড করতে সমস্যা হয়েছে: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

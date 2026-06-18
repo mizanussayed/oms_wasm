@@ -1,0 +1,49 @@
+@inject ToastService ToastSvc
+@implements IDisposable
+@using OrderManagement.Client.Services
+
+<div class="toast-container">
+    @foreach (var toast in _toasts)
+    {
+        <div class="toast-item @(toast.Message.IsSuccess ? "toast-success" : "toast-error") @(toast.Visible ? "show" : "")">
+            <span class="toast-icon">@(toast.Message.IsSuccess ? "✅" : "❌")</span>
+            <span class="toast-text">@toast.Message.Text</span>
+        </div>
+    }
+</div>
+
+@code {
+    private record ToastEntry(ToastMessage Message, bool Visible);
+    private List<ToastEntry> _toasts = new();
+
+    protected override void OnInitialized()
+    {
+        ToastSvc.OnShow += HandleShow;
+    }
+
+    private async void HandleShow(ToastMessage msg)
+    {
+        var entry = new ToastEntry(msg, false);
+        _toasts.Add(entry);
+        await InvokeAsync(StateHasChanged);
+
+        // Trigger show animation
+        await Task.Delay(50);
+        var index = _toasts.IndexOf(entry);
+        if (index >= 0)
+        {
+            _toasts[index] = entry with { Visible = true };
+            await InvokeAsync(StateHasChanged);
+        }
+
+        // Auto-dismiss after 3.5 seconds
+        await Task.Delay(3500);
+        _toasts.RemoveAll(t => t.Message.Id == msg.Id);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        ToastSvc.OnShow -= HandleShow;
+    }
+}

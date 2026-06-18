@@ -1,0 +1,91 @@
+@page "/orders/edit/{Id:int}"
+@inject IOrderService OrderSvc
+@inject ToastService Toast
+@inject NavigationManager Nav
+
+<PageTitle>অর্ডার সম্পাদনা — অর্ডার ব্যবস্থাপনা</PageTitle>
+
+<div class="page-header">
+    <h1 class="page-title">অর্ডার সম্পাদনা করুন</h1>
+    <a href="/orders" class="btn btn-secondary">← ফিরে যান</a>
+</div>
+
+@if (_loading)
+{
+    <LoadingSpinner />
+}
+else if (_order is null)
+{
+    <div class="alert-error">অর্ডারটি পাওয়া যায়নি।</div>
+}
+else
+{
+    <div class="form-card">
+        <EditForm Model="_order" OnValidSubmit="HandleSubmit">
+            <DataAnnotationsValidator />
+
+            <div class="form-group">
+                <label class="form-label">অর্ডার নম্বর <span class="required">*</span></label>
+                <InputText class="form-input" @bind-Value="_order.OrderNo" />
+                <ValidationMessage For="() => _order.OrderNo" class="validation-error" />
+                @if (!string.IsNullOrEmpty(_validationMsg))
+                {
+                    <span class="validation-error">@_validationMsg</span>
+                }
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">স্ট্যাটাস</label>
+                <InputSelect class="form-select" @bind-Value="_order.Status">
+                    <option value="@OrderStatus.Pending">অপেক্ষমাণ</option>
+                    <option value="@OrderStatus.Done">সম্পন্ন</option>
+                    <option value="@OrderStatus.Delivered">ডেলিভার হয়েছে</option>
+                </InputSelect>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" disabled="@_saving">
+                    @if (_saving) { <span class="spinner-sm"></span> }
+                    আপডেট করুন
+                </button>
+                <a href="/orders" class="btn btn-secondary">বাতিল করুন</a>
+            </div>
+        </EditForm>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Order? _order;
+    private bool _loading = true;
+    private bool _saving = false;
+    private string? _validationMsg;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _order = await OrderSvc.GetOrderByIdAsync(Id);
+        _loading = false;
+    }
+
+    private async Task HandleSubmit()
+    {
+        _validationMsg = null;
+        _saving = true;
+
+        try
+        {
+            var (success, msg) = await OrderSvc.UpdateOrderAsync(_order!);
+            if (success) { Toast.ShowSuccess(msg); Nav.NavigateTo("/orders"); }
+            else { _validationMsg = msg; Toast.ShowError(msg); }
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"সমস্যা হয়েছে: {ex.Message}");
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}

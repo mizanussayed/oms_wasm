@@ -1,0 +1,28 @@
+{
+  "name": "অর্ডার ব্যবস্থাপনা",
+  "short_name": "অর্ডার",
+  "description": "স্থানীয় অর্ডার ব্যবস্থাপনা অ্যাপ্লিকেশন",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#6366f1",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ]
+}

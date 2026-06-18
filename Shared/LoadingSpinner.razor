@@ -1,0 +1,12 @@
+<div class="loading-spinner-wrapper">
+    <div class="spinner-ring"></div>
+    @if (!string.IsNullOrEmpty(Message))
+    {
+        <p class="spinner-message">@Message</p>
+    }
+</div>
+
+@code {
+    /// <summary>Optional message displayed beneath the spinner.</summary>
+    [Parameter] public string Message { get; set; } = "লোড হচ্ছে...";
+}

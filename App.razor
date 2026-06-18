@@ -1,0 +1,17 @@
+<Router AppAssembly="typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <PageTitle>পৃষ্ঠা পাওয়া যায়নি</PageTitle>
+        <LayoutView Layout="typeof(Layout.MainLayout)">
+            <div class="not-found">
+                <div class="not-found-icon">🔍</div>
+                <h1>৪০৪ — পৃষ্ঠা পাওয়া যায়নি</h1>
+                <p>আপনি যে পৃষ্ঠাটি খুঁজছেন তা বিদ্যমান নেই।</p>
+                <a href="/" class="btn btn-primary">হোম পেজে ফিরুন</a>
+            </div>
+        </LayoutView>
+    </NotFound>
+</Router>
