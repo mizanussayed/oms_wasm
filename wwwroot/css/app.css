@@ -820,7 +820,7 @@ img { max-width: 100%; display: block; }
         transform: translateX(-100%);
     }
     .sidebar.open { transform: translateX(0); }
-    .sidebar-overlay { display: block; }
+/*    .sidebar-overlay { display: block; }*/
     .sidebar-close { display: inline-flex; }
 
     /* Show hamburger in topbar */
